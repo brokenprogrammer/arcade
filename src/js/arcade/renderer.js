@@ -41,6 +41,7 @@ export class Renderer
             },
             samplerLocations: {
                 image: this.Context.getUniformLocation(ShaderProgram, 'Image'),
+                textureColor: this.Context.getUniformLocation(ShaderProgram, 'TextureColor'),
             },
         };
     }
@@ -191,6 +192,7 @@ export class Renderer
         // NOTE: Setting the shader uniforms.
         this.Context.uniformMatrix4fv(programInfo.uniformLocations.model, false, Model);
         this.Context.uniformMatrix4fv(programInfo.uniformLocations.projection, false, Projection);
+        this.Context.uniform3fv(programInfo.samplerLocations.textureColor, Color)
 
         this.Context.uniform1i(programInfo.samplerLocations.image, 0);
 
