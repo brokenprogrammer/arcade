@@ -35,5 +35,7 @@ export class Arcade extends window.HTMLElement
         this.Renderer = new Renderer(Canvas);
         this.Renderer.setShaders(Tetris.VertexShader, Tetris.FragmentShader);
         this.Renderer.Clear();
+
+        this.Renderer.Render();
     }
 }
