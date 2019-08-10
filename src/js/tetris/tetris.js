@@ -76,12 +76,12 @@ export class Tetris
 
         // TODO: Normalize theese colors.
         this.Colors = [
-            [252, 185, 65], // NOTE: Orange
-            [44, 130, 201], // NOTE: Blue
-            [214, 69, 65], // NOTE: Red
-            [240, 255, 0], // NOTE: Yellow
-            [255, 0, 255], // NOTE: Magenta
-            [63, 195, 128], // NOTE: Green
+            [0.988, 0.725, 0.254], // NOTE: Orange
+            [0.172, 0.509, 0.788], // NOTE: Blue
+            [0.839, 0.270, 0.254], // NOTE: Red
+            [0.941, 1, 0],         // NOTE: Yellow
+            [1, 0, 1],             // NOTE: Magenta
+            [0.247, 0.764, 0.501], // NOTE: Green
         ];
 
         this.Pieces = new Array();

@@ -179,7 +179,7 @@ export class Renderer
             console.log("Done")
         });
 
-        requestCORSIfNotSameOrigin(I, url);
+        //requestCORSIfNotSameOrigin(I, url);
         I.src = url;
 
         return TextureInfo;

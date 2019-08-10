@@ -61,7 +61,7 @@ export class Arcade extends window.HTMLElement
 
         this.Renderer = new Renderer(Canvas, Text);
         
-        this.Img = this.Renderer.initTexture("https://avatars2.githubusercontent.com/u/16289144?s=460&v=4");
+        this.Img = this.Renderer.initTexture("img/tetrisblock1.png");
         
         this.Renderer.setShaders(Tetris.VertexShader, Tetris.FragmentShader);
         this.Renderer.Clear();
