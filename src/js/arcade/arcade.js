@@ -44,7 +44,7 @@ export class Arcade extends window.HTMLElement
         this.Renderer.setShaders(Tetris.VertexShader, Tetris.FragmentShader);
         this.Renderer.Clear();
         
-        document.addEventListener("keydown", this.Tetris.KeyHandler, false);
+        document.addEventListener("keydown", (event) => { this.Tetris.KeyHandler(event); }, false);
 
         requestAnimationFrame(this.Update.bind(this));
     }

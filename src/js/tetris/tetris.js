@@ -140,11 +140,11 @@ export class Tetris
         {
             for (let Y = 0; Y < Dimension; ++Y)
             {
-                if (this.CurrentPiece[X][Y] !== 0)
+                if (this.CurrentPiece[Y][X] !== 0)
                 {
                     // TODO: This is trash
                     if (Color === 0) Color = 1;
-                    this.CurrentPiece[X][Y] = Color;
+                    this.CurrentPiece[Y][X] = Color;
                 }
             }
         }
@@ -152,9 +152,9 @@ export class Tetris
         this.CurrentPieceLocation = [4, 0];
     }
 
-    CanPlace(X, Y)
+    CanPlace(Piece, X, Y)
     {
-        let PieceDimension = this.CurrentPiece.length;
+        let PieceDimension = Piece.length;
 
         for (let PosX = 0; PosX < PieceDimension; ++PosX)
         {
@@ -163,7 +163,7 @@ export class Tetris
                 let CoordinateX = X + PosX;
                 let CoordinateY = Y + PosY;
 
-                if (this.CurrentPiece[PosY][PosX] !== 0)
+                if (Piece[PosY][PosX] !== 0)
                 {
                     if (CoordinateX < 0 || CoordinateX >= this.BoardWidth)
                     {
@@ -172,12 +172,6 @@ export class Tetris
 
                     if (CoordinateY >= this.BoardHeight || this.Board[CoordinateY][CoordinateX] !== 0)
                     {
-                        console.log(CoordinateY);
-                        console.log(CoordinateX);
-                        console.log(this.BoardHeight);
-                        
-                        console.log(this.Board[CoordinateY][CoordinateX])
-
                         return TetrisPlaceStates.BLOCKED;
                     }
                 }
@@ -194,7 +188,7 @@ export class Tetris
             var IsComplete = true;
             for (let X = 0; X < this.BoardWidth; ++X)
             {
-                if (this.Board[X][Y] == 0)
+                if (this.Board[Y][X] == 0)
                 {
                     IsComplete = false;
                 }
@@ -206,7 +200,7 @@ export class Tetris
                 {
                     for (let X = 0; X < this.BoardWidth; ++X)
                     {
-                        this.Board[X][YC] = this.Board[X][YC - 1];
+                        this.Board[YC][X] = this.Board[YC - 1][X];
                     }
                 }
 
@@ -217,14 +211,61 @@ export class Tetris
         }
     }
 
-    Place()
+    Place(X, Y)
     {
-        // TODO: 
+        let Dimension = this.CurrentPiece.length;
+
+        for (let PY = 0; PY < Dimension; ++PY)
+        {
+            for (let PX = 0; PX < Dimension; ++PX)
+            {
+                let CoordinateX = X + PX;
+                let CoordinateY = Y + PY;
+
+                if (this.CurrentPiece[PY][PX] > 0)
+                {
+                    this.Board[CoordinateY][CoordinateX] = this.CurrentPiece[PY][PX];
+                }
+            }
+        }
+
+        this.RemoveFullLines();
     }
 
-    Rotate()
+    Rotate(Left)
     {
-        // TODO:
+        console.log("Inside");
+        let Dimension = this.CurrentPiece.length;
+        let NewPiece = new Array(Dimension);
+        for (var Index = 0; Index < NewPiece.length; ++Index)
+        {
+            NewPiece[Index] = new Array(Dimension);
+        }
+
+        for (let Y = 0; Y < Dimension; ++Y)
+        {
+            for (let X = 0; X < Dimension; ++X)
+            {
+                NewPiece[Y][X] = 0;
+            }
+        }
+
+        for (let I = 0; I < Dimension; ++I)
+        {
+            for (let J = 0; J < Dimension; ++J)
+            {
+                if (Left)
+                {
+                    NewPiece[J][I] = this.CurrentPiece[I][Dimension - 1 - J];
+                }
+                else
+                {
+                    NewPiece[J][I] = this.CurrentPiece[Dimension - 1 - I][J];
+                }
+            }
+        }
+
+        return NewPiece;
     }
 
 
@@ -240,20 +281,16 @@ export class Tetris
         {
             if (this.CurrentPiece !== null)
             {
-                //console.log(this.CurrentPiece)
-                let NewPieceLocation = this.CurrentPieceLocation;
-                NewPieceLocation[1] += 1;
+                let NewPieceLocation = [this.CurrentPieceLocation[0], 1+this.CurrentPieceLocation[1]];;
 
-                //console.log(this.CurrentPieceLocation);
-
-                let PieceState = this.CanPlace(NewPieceLocation[0], NewPieceLocation[1]);
+                let PieceState = this.CanPlace(this.CurrentPiece, NewPieceLocation[0], NewPieceLocation[1]);
                 if (PieceState !== TetrisPlaceStates.ALLOWED)
                 {
                     console.log(PieceState)
-                    this.Place();
+                    this.Place(this.CurrentPieceLocation[0], this.CurrentPieceLocation[1]);
                     this.SpawnPiece();
 
-                    PieceState = this.CanPlace(this.CurrentPieceLocation[0], this.CurrentPieceLocation[1]);
+                    PieceState = this.CanPlace(this.CurrentPiece, this.CurrentPieceLocation[0], this.CurrentPieceLocation[1]);
                     if (PieceState === TetrisPlaceStates.BLOCKED)
                     {
                         // TODO: Game Over!
@@ -287,7 +324,7 @@ export class Tetris
                 if (this.Board[Y][X] > 0)
                 {
                     let Position = [X * 32, Y * 32];
-                    let Size = [32, 32];
+                    let Size = [30, 30];
                     let Rotation = 0.0;
                     let Color = this.Colors[this.Board[Y][X]];
 
@@ -296,20 +333,23 @@ export class Tetris
             }
         }
 
-        let Dimension = this.CurrentPiece.length;
-        // NOTE: Drawing the spawned piece.
-        for (let PY = 0; PY < Dimension; ++PY)
+        if (this.CurrentPiece !== null)
         {
-            for (let PX = 0; PX < Dimension; ++PX)
+            let Dimension = this.CurrentPiece.length;
+            // NOTE: Drawing the spawned piece.
+            for (let PY = 0; PY < Dimension; ++PY)
             {
-                if (this.CurrentPiece[PY][PX] !== 0)
+                for (let PX = 0; PX < Dimension; ++PX)
                 {
-                    let Position = [(this.CurrentPieceLocation[0] + PX) * 32, (this.CurrentPieceLocation[1] + PY) * 32];
-                    let Size = [32, 32];
-                    let Rotation = 0.0;
-                    let Color = this.Colors[this.CurrentPiece[PY][PX]];
+                    if (this.CurrentPiece[PY][PX] !== 0)
+                    {
+                        let Position = [(this.CurrentPieceLocation[0] + PX) * 32, (this.CurrentPieceLocation[1] + PY) * 32];
+                        let Size = [30, 30];
+                        let Rotation = 0.0;
+                        let Color = this.Colors[this.CurrentPiece[PY][PX]];
 
-                    Renderer.Render(Texture, Position, Size, Rotation, Color);
+                        Renderer.Render(Texture, Position, Size, Rotation, Color);
+                    }
                 }
             }
         }
@@ -317,10 +357,44 @@ export class Tetris
 
     KeyHandler(Event)
     {
-        if (Event.keyCode == 39)
+        switch(Event.key)
         {
-            // NOTE: Right pressed.
-            console.log("Right Key pressed!");
+            case "ArrowLeft":
+            {
+                let NewLocation = [this.CurrentPieceLocation[0], this.CurrentPieceLocation[1]];
+                NewLocation[0]--;
+
+                let PlaceState = this.CanPlace(this.CurrentPiece, NewLocation[0], NewLocation[1]);
+                if (PlaceState === TetrisPlaceStates.ALLOWED)
+                {
+                    this.CurrentPieceLocation = NewLocation;
+                }
+            } break;
+            case "ArrowRight":
+            {
+                let NewLocation = [this.CurrentPieceLocation[0], this.CurrentPieceLocation[1]];
+                NewLocation[0]++;
+
+                let PlaceState = this.CanPlace(this.CurrentPiece, NewLocation[0], NewLocation[1]);
+                if (PlaceState === TetrisPlaceStates.ALLOWED)
+                {
+                    this.CurrentPieceLocation = NewLocation;
+                }
+            } break;
+            case "ArrowUp":
+            {
+                let NewPiece = this.Rotate(true);
+
+                let PlaceState = this.CanPlace(NewPiece, this.CurrentPieceLocation[0], this.CurrentPieceLocation[1]);
+                if (PlaceState === TetrisPlaceStates.ALLOWED)
+                {
+                    this.CurrentPiece = NewPiece;
+                }
+            } break;
+            case "ArrowDown":
+            {
+                this.ElapsedTime = this.StepTime + 1;
+            } break;
         }
     }
 
