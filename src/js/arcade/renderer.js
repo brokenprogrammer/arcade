@@ -1,11 +1,20 @@
 /*
 */
+const TextRenderingTarget = 
+{
+    TOPSCORE: 'TopScore',
+    SCORE: 'Score',
+    LINES: 'Lines',
+    LEVEL: 'Level',
+};
+
 export class Renderer
 {
-    constructor(Canvas)
+    constructor(Canvas, Text)
     {
         this.ProgramInfo = null;
-        this.Canvas = Canvas
+        this.Canvas = Canvas;
+        this.TextContainer = Text;
 
         // NOTE: Checking for canvas support.
         if (Canvas.getContext)
@@ -23,6 +32,46 @@ export class Renderer
                 this.UseGL = true;
             }
         }
+    }
+
+    setScoreText(Target, Text)
+    {
+        let Element = null;
+                
+        if (Target === TextRenderingTarget.TOPSCORE)
+        {
+            Element = this.TextContainer.querySelector("#top-score");
+        }
+        else if (Target === TextRenderingTarget.SCORE)
+        {
+            Element = this.TextContainer.querySelector("#score");
+        }
+        else if (Target === TextRenderingTarget.LINES)
+        {
+            Element = this.TextContainer.querySelector("#lines");
+        }
+        else if (Target === TextRenderingTarget.LEVEL)
+        {
+            Element = this.TextContainer.querySelector("#level");
+        }
+        else
+        {
+            return;
+        }
+
+        // NOTE: Removing all old children.
+        while(Element.firstChild)
+        {
+            Element.removeChild(Element.firstChild);
+        }
+
+        let Node = document.createTextNode(Text);
+        Element.appendChild(Node);
+    }
+
+    static get TextTarget()
+    {
+        return (TextRenderingTarget);
     }
 
     setShaders(VertexShader, FragmentShader)

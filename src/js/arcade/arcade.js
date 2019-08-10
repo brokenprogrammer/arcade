@@ -3,10 +3,31 @@ import { Tetris } from "../tetris/tetris.js";
 
 const Template = document.createElement("template");
 Template.innerHTML = `
-    <style></style>
+    <style>
+        #arcade-container {
+            width: 960px;
+            position: relative;
+        }
+
+        #arcade-text {
+            font-family: 'Press Start 2P', cursive;
+
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            color: #FFFFFF;
+        }
+    </style>
+    
     <h1>Test</h1>
     <div id="arcade-container">
         <canvas id="arcade"></canvas>
+        <div id=arcade-text>
+            <div>Top: <span id="top-score">0</span></div>
+            <div>Score: <span id="score">0</span></div>
+            <div>Lines: <span id="lines">0</span></div>
+            <div>Level: <span id="level">0</span></div>
+        </div>
     </div>
     `;
 
@@ -33,11 +54,12 @@ export class Arcade extends window.HTMLElement
         // TODO:First the menu of the arcade should show 
         //      but for now we instantly start the tetris game.
 
+        let Text = this.shadowRoot.querySelector("#arcade-text");
         let Canvas = this.shadowRoot.querySelector("#arcade");
-        Canvas.width = 800;
-        Canvas.height = 600;
+        Canvas.width = 960;
+        Canvas.height = 720;
 
-        this.Renderer = new Renderer(Canvas);
+        this.Renderer = new Renderer(Canvas, Text);
         
         this.Img = this.Renderer.initTexture("https://avatars2.githubusercontent.com/u/16289144?s=460&v=4");
         

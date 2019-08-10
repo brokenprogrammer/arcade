@@ -1,3 +1,4 @@
+import "../arcade/renderer.js";
 
 // NOTE: Vertex shader program
 const vsSource = `
@@ -43,12 +44,16 @@ export class Tetris
         this.StepTime = 300;
         this.ElapsedTime = 0;
 
+        this.BoardLocationX = 240;
+        this.BoardLocationY = 40;
+
         this.BoardWidth = 10;
         this.BoardHeight = 20;
-        this.BlockSize = 32; // TODO: Might be useless
+        this.BlockSize = 26;
 
         this.CurrentPiece = null;
         this.CurrentPieceLocation = null;
+        this.CurrentScore = 0;
 
         // NOTE: Initialize board.
         this.Board = new Array(this.BoardHeight);
@@ -317,14 +322,15 @@ export class Tetris
         // NOTE: Clear previous content.
         Renderer.Clear();
 
+        // NOTE: Drawing the board.
         for (var Y = 0; Y < this.BoardHeight; ++Y)
         {
             for (var X = 0; X < this.BoardWidth; ++X)
             {
                 if (this.Board[Y][X] > 0)
                 {
-                    let Position = [X * 32, Y * 32];
-                    let Size = [30, 30];
+                    let Position = [this.BoardLocationX + (X * this.BlockSize), this.BoardLocationY + (Y * this.BlockSize)];
+                    let Size = [this.BlockSize, this.BlockSize];
                     let Rotation = 0.0;
                     let Color = this.Colors[this.Board[Y][X]];
 
@@ -343,8 +349,8 @@ export class Tetris
                 {
                     if (this.CurrentPiece[PY][PX] !== 0)
                     {
-                        let Position = [(this.CurrentPieceLocation[0] + PX) * 32, (this.CurrentPieceLocation[1] + PY) * 32];
-                        let Size = [30, 30];
+                        let Position = [this.BoardLocationX + ((this.CurrentPieceLocation[0] + PX) * this.BlockSize), this.BoardLocationY + ((this.CurrentPieceLocation[1] + PY) * this.BlockSize)];
+                        let Size = [this.BlockSize, this.BlockSize];
                         let Rotation = 0.0;
                         let Color = this.Colors[this.CurrentPiece[PY][PX]];
 
@@ -353,6 +359,12 @@ export class Tetris
                 }
             }
         }
+
+        // NOTE: Drawing the current Score.
+        Renderer.setScoreText('TopScore', "1000000");
+        Renderer.setScoreText('Score', this.CurrentScore);
+        Renderer.setScoreText('Lines', 0);
+        Renderer.setScoreText('Level', 0);
     }
 
     KeyHandler(Event)
