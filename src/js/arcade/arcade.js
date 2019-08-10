@@ -21,6 +21,7 @@ export class Arcade extends window.HTMLElement
 
         // TODO: This is temporary.
         this.Tetris = new Tetris();
+        this.Then = 0;
     }
 
     connectedCallback()
@@ -32,10 +33,29 @@ export class Arcade extends window.HTMLElement
         //      but for now we instantly start the tetris game.
 
         let Canvas = this.shadowRoot.querySelector("#arcade");
+        Canvas.width = 800;
+        Canvas.height = 600;
+
         this.Renderer = new Renderer(Canvas);
         this.Renderer.setShaders(Tetris.VertexShader, Tetris.FragmentShader);
         this.Renderer.Clear();
-
+        
         this.Renderer.Render();
+        
+        document.addEventListener("keydown", this.Tetris.KeyHandler, false);
+
+        requestAnimationFrame(this.Update.bind(this));
+    }
+
+    Update(Now)
+    {
+        Now *= 0.001; // NOTE: Convert to seconds.
+        const DeltaTime = Now - this.Then;
+        this.Then = Now;
+
+        this.Tetris.Update(DeltaTime);
+        this.Tetris.Draw(this.Renderer);
+
+        requestAnimationFrame(this.Update.bind(this));
     }
 }

@@ -33,11 +33,11 @@ export class Renderer
         {
             program: ShaderProgram,
             attribLocations: {
-                vertexPosition: this.Context.getAttribLocation(ShaderProgram, 'aVertexPosition'),
+                vertex: this.Context.getAttribLocation(ShaderProgram, 'vertex'),
             },
             uniformLocations: {
-                projectionMatrix: this.Context.getUniformLocation(ShaderProgram, 'uProjectionMatrix'),
-                modelViewMatrix: this.Context.getUniformLocation(ShaderProgram, 'uModelViewMatrix'),
+                projection: this.Context.getUniformLocation(ShaderProgram, 'projection'),
+                model: this.Context.getUniformLocation(ShaderProgram, 'model'),
             },
         };
     }
@@ -85,10 +85,14 @@ export class Renderer
         this.Context.bindBuffer(this.Context.ARRAY_BUFFER, PositionBuffer);
 
         const positions = [
-            -1.0,  1.0,
-            1.0,  1.0,
-            -1.0, -1.0,
-            1.0, -1.0,
+            // Pos      // Tex
+            0.0, 1.0, 0.0, 1.0,
+            1.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 
+        
+            0.0, 1.0, 0.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 0.0, 1.0, 0.0
             ];
         this.Context.bufferData(this.Context.ARRAY_BUFFER, new Float32Array(positions), this.Context.STATIC_DRAW);
 
@@ -97,78 +101,73 @@ export class Renderer
         };
     }
 
-    Render()
+    Render(Texture)
     {
         // TODO: Lines here are temp.
         const buffers = this.initBuffers();
         const programInfo = this.ProgramInfo;
 
         this.Context.clearColor(0.0, 0.0, 0.0, 1.0);
-        this.Context.clearDepth(1.0);
-        this.Context.enable(this.Context.DEPTH_TEST);
-        this.Context.depthFunc(this.Context.LEQUAL);
+        //this.Context.clearDepth(1.0);
+        //this.Context.enable(this.Context.DEPTH_TEST);
+        //this.Context.depthFunc(this.Context.LEQUAL);
 
         // NOTE: Clear before draw
-        this.Context.clear(this.Context.COLOR_BUFFER_BIT | this.Context.DEPTH_BUFFER_BIT);
+        this.Context.clear(this.Context.COLOR_BUFFER_BIT);
 
-        // Create a perspective matrix, a special matrix that is
-        // used to simulate the distortion of perspective in a camera.
-        // Our field of view is 45 degrees, with a width/height
-        // ratio that matches the display size of the canvas
-        // and we only want to see objects between 0.1 units
-        // and 100 units away from the camera.
+        let Position = [100, 100];
+        let Size = [300, 300];
+        let Rotation = 0.0;
 
-        const fieldOfView = 45 * Math.PI / 180;   // in radians
-        const aspect = this.Context.canvas.clientWidth / this.Context.canvas.clientHeight;
-        const zNear = 0.1;
-        const zFar = 100.0;
-        const projectionMatrix = mat4.create();
+        //this.Context.bindTexture(this.Context.TEXTURE_2D, Texture);
 
-        // note: glmatrix.js always has the first argument
-        // as the destination to receive the result.
-        mat4.perspective(projectionMatrix,
-            fieldOfView,
-            aspect,
-            zNear,
-            zFar);
+        this.Context.useProgram(programInfo.program);
+
+        const Projection = mat4.create();
+        mat4.ortho(Projection, 0.0, 800.0, 600.0, 0.0, -1.0, 1.0);
+
+        let Model = mat4.create();
+
+        mat4.translate(Model, Model, [Position[0], Position[1], 1.0]);
+
+        // vec3.set(Translation, 0.5 * 10, 0.5*10, 0.0);
+        mat4.translate(Model, Model, [0.5 * Size[0], 0.5 * Size[1], 0.0]);
         
-        const modelViewMatrix = mat4.create();
+        // vec3.set(Translation, 0.0, 0.0, 1.0);
+        mat4.rotate(Model, Model, 0, [0.0, 0.0, 1.0]);
 
-        mat4.translate(modelViewMatrix, modelViewMatrix, [-0.0, 0.0, -6.0]);
+        // vec3.set(Translation, -0.5 * 10, -0.5*10, 0.0);
+        mat4.translate(Model, Model, [-0.5 * Size[0], -0.5 * Size[1], 0.0]);
+
+        // vec3.set(Translation, 1.0, 1.0, 1.0);
+        mat4.scale(Model, Model, [Size[0], Size[1], 1.0]);
 
         {
-            const numComponents = 2;  // pull out 2 values per iteration
+            const numComponents = 4;            // pull out 2 values per iteration
             const type = this.Context.FLOAT;    // the data in the buffer is 32bit floats
-            const normalize = false;  // don't normalize
-            const stride = 0;         // how many bytes to get from one set of values to the next
-                                      // 0 = use type and numComponents above
-            const offset = 0;         // how many bytes inside the buffer to start from
+            const normalize = false;            // don't normalize
+            const stride = 0;                   // how many bytes to get from one set of values to the next
+                                                // 0 = use type and numComponents above
+            const offset = 0;                   // how many bytes inside the buffer to start from
             this.Context.bindBuffer(this.Context.ARRAY_BUFFER, buffers.position);
             this.Context.vertexAttribPointer(
-                programInfo.attribLocations.vertexPosition,
+                programInfo.attribLocations.vertex,
                 numComponents,
                 type,
                 normalize,
                 stride,
                 offset);
             this.Context.enableVertexAttribArray(
-                programInfo.attribLocations.vertexPosition);
-          }
+                programInfo.attribLocations.vertex);
+        }
+        
+        // NOTE: Setting the shader uniforms.
+        this.Context.uniformMatrix4fv(programInfo.uniformLocations.model, false, Model);
+        this.Context.uniformMatrix4fv(programInfo.uniformLocations.projection, false, Projection);
 
-          this.Context.useProgram(programInfo.program);
-          
-          this.Context.uniformMatrix4fv(
-            programInfo.uniformLocations.projectionMatrix,
-            false,
-            projectionMatrix);
-          this.Context.uniformMatrix4fv(
-            programInfo.uniformLocations.modelViewMatrix,
-            false,
-            modelViewMatrix);
-      
         {
           const offset = 0;
-          const vertexCount = 4;
+          const vertexCount = 6;
           this.Context.drawArrays(this.Context.TRIANGLE_STRIP, offset, vertexCount);
         }
     }
