@@ -6,15 +6,24 @@ const vsSource = `
     uniform mat4 model;
     uniform mat4 projection;
 
+    varying vec2 TexCoords;
+
     void main() {
+        TexCoords = vertex.zw;
         gl_Position = projection * model * vec4(vertex.xy, 0.0, 1.0);
     }
     `;
 
 // NOTE: Frag shader program
 const fsSource = `
+    precision mediump float;
+
+    varying vec2 TexCoords;
+
+    uniform sampler2D Image;
+
     void main() {
-        gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        gl_FragColor = texture2D(Image, TexCoords);
     }
     `;
 
@@ -40,7 +49,6 @@ export class Tetris
                 this.Board[Y][X] = 0;
             }
         }
-
     }
 
     Init()
@@ -53,9 +61,16 @@ export class Tetris
 
     }
 
-    Draw(Renderer)
+    Draw(Renderer, Texture)
     {
-        Renderer.Render();
+        // NOTE: Clear previous content.
+        Renderer.Clear();
+
+        let Position = [100, 100];
+        let Size = [30, 30];
+        let Rotation = 0.0;
+        Renderer.Render(Texture, Position, Size, Rotation, null);
+        Renderer.Render(Texture, [200, 100], Size, Rotation, null);
     }
 
     KeyHandler(Event)

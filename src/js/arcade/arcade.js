@@ -22,6 +22,7 @@ export class Arcade extends window.HTMLElement
         // TODO: This is temporary.
         this.Tetris = new Tetris();
         this.Then = 0;
+        this.Img = null;
     }
 
     connectedCallback()
@@ -37,10 +38,11 @@ export class Arcade extends window.HTMLElement
         Canvas.height = 600;
 
         this.Renderer = new Renderer(Canvas);
+        
+        this.Img = this.Renderer.initTexture("https://avatars2.githubusercontent.com/u/16289144?s=460&v=4");
+        
         this.Renderer.setShaders(Tetris.VertexShader, Tetris.FragmentShader);
         this.Renderer.Clear();
-        
-        this.Renderer.Render();
         
         document.addEventListener("keydown", this.Tetris.KeyHandler, false);
 
@@ -54,7 +56,7 @@ export class Arcade extends window.HTMLElement
         this.Then = Now;
 
         this.Tetris.Update(DeltaTime);
-        this.Tetris.Draw(this.Renderer);
+        this.Tetris.Draw(this.Renderer, this.Img.Texture);
 
         requestAnimationFrame(this.Update.bind(this));
     }

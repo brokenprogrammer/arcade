@@ -39,6 +39,9 @@ export class Renderer
                 projection: this.Context.getUniformLocation(ShaderProgram, 'projection'),
                 model: this.Context.getUniformLocation(ShaderProgram, 'model'),
             },
+            samplerLocations: {
+                image: this.Context.getUniformLocation(ShaderProgram, 'Image'),
+            },
         };
     }
 
@@ -101,7 +104,38 @@ export class Renderer
         };
     }
 
-    Render(Texture)
+    initTexture(url)
+    {
+        let Texture = this.Context.createTexture();
+        this.Context.bindTexture(this.Context.TEXTURE_2D, Texture);
+
+        this.Context.texParameteri(this.Context.TEXTURE_2D, this.Context.TEXTURE_WRAP_S, this.Context.CLAMP_TO_EDGE);
+        this.Context.texParameteri(this.Context.TEXTURE_2D, this.Context.TEXTURE_WRAP_T, this.Context.CLAMP_TO_EDGE);
+        this.Context.texParameteri(this.Context.TEXTURE_2D, this.Context.TEXTURE_MIN_FILTER, this.Context.LINEAR);
+
+        let TextureInfo = {
+            Width: 1,
+            Height: 1,
+            Texture: Texture
+        };
+
+        let I = new Image();
+        I.addEventListener('load', (event) => {
+            TextureInfo.Width = I.width;
+            TextureInfo.Height = I.height;
+            
+            this.Context.bindTexture(this.Context.TEXTURE_2D, TextureInfo.Texture);
+            this.Context.texImage2D(this.Context.TEXTURE_2D, 0, this.Context.RGBA, this.Context.RGBA, this.Context.UNSIGNED_BYTE, I);
+            console.log("Done")
+        });
+
+        requestCORSIfNotSameOrigin(I, url);
+        I.src = url;
+
+        return TextureInfo;
+    }
+
+    Render(Texture, Position, Size, Rotation, Color)
     {
         // TODO: Lines here are temp.
         const buffers = this.initBuffers();
@@ -112,14 +146,7 @@ export class Renderer
         //this.Context.enable(this.Context.DEPTH_TEST);
         //this.Context.depthFunc(this.Context.LEQUAL);
 
-        // NOTE: Clear before draw
-        this.Context.clear(this.Context.COLOR_BUFFER_BIT);
-
-        let Position = [100, 100];
-        let Size = [300, 300];
-        let Rotation = 0.0;
-
-        //this.Context.bindTexture(this.Context.TEXTURE_2D, Texture);
+        this.Context.bindTexture(this.Context.TEXTURE_2D, Texture);
 
         this.Context.useProgram(programInfo.program);
 
@@ -134,7 +161,7 @@ export class Renderer
         mat4.translate(Model, Model, [0.5 * Size[0], 0.5 * Size[1], 0.0]);
         
         // vec3.set(Translation, 0.0, 0.0, 1.0);
-        mat4.rotate(Model, Model, 0, [0.0, 0.0, 1.0]);
+        mat4.rotate(Model, Model, Rotation, [0.0, 0.0, 1.0]);
 
         // vec3.set(Translation, -0.5 * 10, -0.5*10, 0.0);
         mat4.translate(Model, Model, [-0.5 * Size[0], -0.5 * Size[1], 0.0]);
@@ -165,6 +192,8 @@ export class Renderer
         this.Context.uniformMatrix4fv(programInfo.uniformLocations.model, false, Model);
         this.Context.uniformMatrix4fv(programInfo.uniformLocations.projection, false, Projection);
 
+        this.Context.uniform1i(programInfo.samplerLocations.image, 0);
+
         {
           const offset = 0;
           const vertexCount = 6;
@@ -181,3 +210,10 @@ export class Renderer
         }
     }
 }
+
+// TODO:
+function requestCORSIfNotSameOrigin(img, url) {
+    if ((new URL(url)).origin !== window.location.origin) {
+      img.crossOrigin = "";
+    }
+  }
