@@ -123,7 +123,7 @@ export class Tetris
             [0, 0, 0],
         ]);
 
-        // NOTE: T
+        // NOTE: Z
         this.Pieces.push([
             [1, 1, 0],
             [0, 1, 1],
@@ -237,7 +237,7 @@ export class Tetris
 
 
                     let UnusedParticle = Particle.FirstUnusedParticle(this.Particles);
-                    this.Particles[UnusedParticle].Respawn([this.BoardLocationX, (Y * this.BlockSize)], [RandomVelocityX, RandomVelocityY], RandomOffset);
+                    this.Particles[UnusedParticle].Respawn([this.BoardLocationX + (5 * this.BlockSize), ((Y-0.5) * this.BlockSize)], [RandomVelocityX, RandomVelocityY], RandomOffset);
                 }
             }
         }
@@ -323,7 +323,8 @@ export class Tetris
                     PieceState = this.CanPlace(this.CurrentPiece, this.CurrentPieceLocation[0], this.CurrentPieceLocation[1]);
                     if (PieceState === TetrisPlaceStates.BLOCKED)
                     {
-                        // TODO: Game Over!
+                        // NOTE: Game Over!
+                        return false;
                     }
                 }
                 else
@@ -355,6 +356,8 @@ export class Tetris
                 Particle.color[3] -= DeltaTime;
             }
         }
+
+        return true;
     }
 
     Draw(Renderer, Texture)

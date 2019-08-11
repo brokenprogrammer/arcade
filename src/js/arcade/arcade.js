@@ -17,10 +17,30 @@ Template.innerHTML = `
             top: 10px;
             color: #FFFFFF;
         }
+
+        #menu {
+            position: absolute;
+            left: 43%;
+            top: 48%;
+        }
+
+        #start-button {
+            font-family: 'Press Start 2P', cursive;
+            font-weight: 800;
+            font-size: 24px;
+            color: #FFFFFF;
+            border: none;
+            text-decoration: none;
+
+            width: 120px;
+            height: 50px;
+        }
     </style>
     
-    <h1>Test</h1>
     <div id="arcade-container">
+        <div id="menu">
+            <a id="start-button" href="#">Start</a>
+        </div>
         <canvas id="arcade"></canvas>
         <div id=arcade-text>
             <div>Top: <span id="top-score">0</span></div>
@@ -42,6 +62,7 @@ export class Arcade extends window.HTMLElement
 
         // TODO: This is temporary.
         this.Tetris = new Tetris();
+        this.Running = false;
         this.Then = 0;
         this.Img = null;
     }
@@ -68,7 +89,13 @@ export class Arcade extends window.HTMLElement
         this.Tetris.Init(this.Renderer);
         
         document.addEventListener("keydown", (event) => { this.Tetris.KeyHandler(event); }, false);
+        this.shadowRoot.getElementById("start-button").addEventListener('click', this.StartGame.bind(this));
+    }
 
+    StartGame()
+    {
+        this.shadowRoot.getElementById("menu").remove();
+        this.Running = true;
         requestAnimationFrame(this.Update.bind(this));
     }
 
@@ -78,9 +105,12 @@ export class Arcade extends window.HTMLElement
         const DeltaTime = Now - this.Then;
         this.Then = Now;
 
-        this.Tetris.Update(DeltaTime);
+        this.Running = this.Tetris.Update(DeltaTime);
         this.Tetris.Draw(this.Renderer, this.Img.Texture);
 
-        requestAnimationFrame(this.Update.bind(this));
+        if (this.Running)
+        {
+            requestAnimationFrame(this.Update.bind(this));
+        }
     }
 }
