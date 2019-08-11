@@ -1,4 +1,6 @@
 import "../arcade/renderer.js";
+import { Particle} from "../arcade/particle.js";
+
 
 // NOTE: Vertex shader program
 const vsSource = `
@@ -127,6 +129,15 @@ export class Tetris
             [0, 1, 1],
             [0, 0, 0],
         ]);
+
+        // NOTE: Particle code here.
+        this.NumberOfParticles = 100;
+        this.Particles = new Array(this.NumberOfParticles);
+
+        for (let Index = 0; Index < this.NumberOfParticles; ++Index)
+        {
+            this.Particles[Index] = new Particle();
+        }
     }
 
     SpawnPiece()
@@ -212,6 +223,22 @@ export class Tetris
                 ++Y;
 
                 // TODO: SCORE!
+
+                let NewParticles = 20;
+                for (let Index = 0; Index < NewParticles; ++Index)
+                {
+                    let RandomOffset = (Math.floor(Math.random() * Math.floor(20)));
+                    
+                    let RandomVelocityX = Math.floor(Math.random() * 51);
+                    RandomVelocityX *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
+
+                    let RandomVelocityY = Math.floor(Math.random() * 51);
+                    RandomVelocityY *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
+
+
+                    let UnusedParticle = Particle.FirstUnusedParticle(this.Particles);
+                    this.Particles[UnusedParticle].Respawn([this.BoardLocationX, (Y * this.BlockSize)], [RandomVelocityX, RandomVelocityY], RandomOffset);
+                }
             }
         }
     }
@@ -239,7 +266,6 @@ export class Tetris
 
     Rotate(Left)
     {
-        console.log("Inside");
         let Dimension = this.CurrentPiece.length;
         let NewPiece = new Array(Dimension);
         for (var Index = 0; Index < NewPiece.length; ++Index)
@@ -274,9 +300,9 @@ export class Tetris
     }
 
 
-    Init()
+    Init(Renderer)
     {
-        // TODO: Initiate textures / colors
+        this.ParticleShaders = Renderer.BuildParticleShader(Particle.VertexShader, Particle.FragmentShader); 
     }
 
     Update(DeltaTime)
@@ -291,7 +317,6 @@ export class Tetris
                 let PieceState = this.CanPlace(this.CurrentPiece, NewPieceLocation[0], NewPieceLocation[1]);
                 if (PieceState !== TetrisPlaceStates.ALLOWED)
                 {
-                    console.log(PieceState)
                     this.Place(this.CurrentPieceLocation[0], this.CurrentPieceLocation[1]);
                     this.SpawnPiece();
 
@@ -313,6 +338,21 @@ export class Tetris
                 console.log("GAME STARTED!")
                 this.SpawnPiece();
                 this.ElapsedTime = 0;
+            }
+        }
+
+        // NOTE: Updating particle logic
+        for (let Index = 0; Index < this.NumberOfParticles; ++Index)
+        {
+            let Particle = this.Particles[Index];
+            Particle.life = Particle.life - DeltaTime;
+
+            if (Particle.life > 0.0)
+            {
+                // TODO: Play with theese values!!
+                Particle.position[0] -= Particle.Velocity[0];
+                Particle.position[1] -= Particle.Velocity[1];
+                Particle.color[3] -= DeltaTime;
             }
         }
     }
@@ -357,6 +397,17 @@ export class Tetris
                         Renderer.Render(Texture, Position, Size, Rotation, Color);
                     }
                 }
+            }
+        }
+
+        
+        for (let Index = 0; Index < this.NumberOfParticles; ++Index)
+        {
+            let Particle = this.Particles[Index];
+            if (Particle.life > 0.0)
+            {
+                let Size = [5, 5];
+                Renderer.RenderWithShader(this.ParticleShaders, Texture, Particle.position, Size, 0.0, Particle.color);
             }
         }
 

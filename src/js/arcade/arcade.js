@@ -62,9 +62,10 @@ export class Arcade extends window.HTMLElement
         this.Renderer = new Renderer(Canvas, Text);
         
         this.Img = this.Renderer.initTexture("img/tetrisblock1.png");
-        
-        this.Renderer.setShaders(Tetris.VertexShader, Tetris.FragmentShader);
+        this.Renderer.setGameShaders(Tetris.VertexShader, Tetris.FragmentShader);
         this.Renderer.Clear();
+
+        this.Tetris.Init(this.Renderer);
         
         document.addEventListener("keydown", (event) => { this.Tetris.KeyHandler(event); }, false);
 

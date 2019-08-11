@@ -19,7 +19,7 @@ export class Renderer
         // NOTE: Checking for canvas support.
         if (Canvas.getContext)
         {
-            this.Context = Canvas.getContext("webgl");
+            this.Context = Canvas.getContext("webgl", {premultipliedAlpha: false});
 
             // Validate that WebGL is available.
             if (this.Context == null)
@@ -74,7 +74,7 @@ export class Renderer
         return (TextRenderingTarget);
     }
 
-    setShaders(VertexShader, FragmentShader)
+    setGameShaders(VertexShader, FragmentShader)
     {
         const ShaderProgram = this.initShaderProgram(VertexShader, FragmentShader);
 
@@ -91,6 +91,26 @@ export class Renderer
             samplerLocations: {
                 image: this.Context.getUniformLocation(ShaderProgram, 'Image'),
                 textureColor: this.Context.getUniformLocation(ShaderProgram, 'TextureColor'),
+            },
+        };
+    }
+
+    BuildParticleShader(VertexShader, FragmentShader)
+    {
+        const ShaderProgram = this.initShaderProgram(VertexShader, FragmentShader);
+
+        return {
+            Program: ShaderProgram,
+            AttributeLocations: {
+                vertex: this.Context.getAttribLocation(ShaderProgram, 'vertex'),
+            },
+            UniformLocations: {
+                projection: this.Context.getUniformLocation(ShaderProgram, 'projection'),
+                offset: this.Context.getUniformLocation(ShaderProgram, 'offset'),
+                color: this.Context.getUniformLocation(ShaderProgram, 'color'),
+            },
+            SamplerLocations: {
+                image: this.Context.getUniformLocation(ShaderProgram, 'Image'),
             },
         };
     }
@@ -192,10 +212,7 @@ export class Renderer
         const programInfo = this.ProgramInfo;
 
         this.Context.clearColor(0.0, 0.0, 0.0, 1.0);
-        //this.Context.clearDepth(1.0);
-        //this.Context.enable(this.Context.DEPTH_TEST);
-        //this.Context.depthFunc(this.Context.LEQUAL);
-
+        
         this.Context.bindTexture(this.Context.TEXTURE_2D, Texture);
 
         this.Context.useProgram(programInfo.program);
@@ -207,16 +224,12 @@ export class Renderer
 
         mat4.translate(Model, Model, [Position[0], Position[1], 1.0]);
 
-        // vec3.set(Translation, 0.5 * 10, 0.5*10, 0.0);
         mat4.translate(Model, Model, [0.5 * Size[0], 0.5 * Size[1], 0.0]);
         
-        // vec3.set(Translation, 0.0, 0.0, 1.0);
         mat4.rotate(Model, Model, Rotation, [0.0, 0.0, 1.0]);
 
-        // vec3.set(Translation, -0.5 * 10, -0.5*10, 0.0);
         mat4.translate(Model, Model, [-0.5 * Size[0], -0.5 * Size[1], 0.0]);
 
-        // vec3.set(Translation, 1.0, 1.0, 1.0);
         mat4.scale(Model, Model, [Size[0], Size[1], 1.0]);
 
         {
@@ -244,6 +257,59 @@ export class Renderer
         this.Context.uniform3fv(programInfo.samplerLocations.textureColor, Color);
 
         this.Context.uniform1i(programInfo.samplerLocations.image, 0);
+
+        {
+          const offset = 0;
+          const vertexCount = 6;
+          this.Context.drawArrays(this.Context.TRIANGLE_STRIP, offset, vertexCount);
+        }
+    }
+
+    RenderWithShader(ProgramInfo, Texture, Position, Size, Rotation, Color)
+    {
+        const Buffers = this.initBuffers();
+
+        this.Context.clearColor(0.0, 0.0, 0.0, 1.0);
+        this.Context.enable(this.Context.BLEND);
+        this.Context.blendFunc(this.Context.SRC_ALPHA, this.Context.ONE_MINUS_SRC_ALPHA);
+        this.Context.bindTexture(this.Context.TEXTURE_2D, Texture);
+        this.Context.useProgram(ProgramInfo.Program);
+
+        const Projection = mat4.create();
+        mat4.ortho(Projection, 0.0, 800.0, 600.0, 0.0, -1.0, 1.0);
+
+        let Model = mat4.create();
+        mat4.translate(Model, Model, [Position[0], Position[1], 1.0]);
+        mat4.translate(Model, Model, [0.5 * Size[0], 0.5 * Size[1], 0.0]);
+        mat4.rotate(Model, Model, Rotation, [0.0, 0.0, 1.0]);
+        mat4.translate(Model, Model, [-0.5 * Size[0], -0.5 * Size[1], 0.0]);
+        mat4.scale(Model, Model, [Size[0], Size[1], 1.0]);
+
+        {
+            const numComponents = 4;            // pull out 2 values per iteration
+            const type = this.Context.FLOAT;    // the data in the buffer is 32bit floats
+            const normalize = false;            // don't normalize
+            const stride = 0;                   // how many bytes to get from one set of values to the next
+                                                // 0 = use type and numComponents above
+            const offset = 0;                   // how many bytes inside the buffer to start from
+            this.Context.bindBuffer(this.Context.ARRAY_BUFFER, Buffers.position);
+            this.Context.vertexAttribPointer(
+                ProgramInfo.AttributeLocations.vertex,
+                numComponents,
+                type,
+                normalize,
+                stride,
+                offset);
+            this.Context.enableVertexAttribArray(
+                ProgramInfo.AttributeLocations.vertex);
+        }
+
+        // NOTE: Setting the shader uniforms.
+        this.Context.uniformMatrix4fv(ProgramInfo.UniformLocations.projection, false, Projection);
+        this.Context.uniform2fv(ProgramInfo.UniformLocations.offset, Position);
+        this.Context.uniform4fv(ProgramInfo.UniformLocations.color, Color);
+
+        this.Context.uniform1i(ProgramInfo.SamplerLocations.image, 0);
 
         {
           const offset = 0;
