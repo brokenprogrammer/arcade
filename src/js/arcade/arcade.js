@@ -69,7 +69,6 @@ export class Arcade extends window.HTMLElement
 
     connectedCallback()
     {
-        // TODO: Add layers of canvas for UI, game, and background?
         // TODO: Add games here.
 
         // TODO:First the menu of the arcade should show 

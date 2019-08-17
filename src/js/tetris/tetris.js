@@ -56,6 +56,7 @@ export class Tetris
         this.CurrentPiece = null;
         this.CurrentPieceLocation = null;
         this.CurrentScore = 0;
+        this.CurrentLines = 0;
 
         // NOTE: Initialize board.
         this.Board = new Array(this.BoardHeight);
@@ -199,6 +200,8 @@ export class Tetris
 
     RemoveFullLines()
     {
+        let OldLines = this.CurrentLines;
+
         for (let Y = this.BoardHeight -1; Y >= 0; --Y)
         {
             var IsComplete = true;
@@ -221,9 +224,9 @@ export class Tetris
                 }
 
                 ++Y;
+                this.CurrentLines += 1;
 
-                // TODO: SCORE!
-
+                // NOTE: Particle effect.
                 let NewParticles = 20;
                 for (let Index = 0; Index < NewParticles; ++Index)
                 {
@@ -240,6 +243,13 @@ export class Tetris
                     this.Particles[UnusedParticle].Respawn([this.BoardLocationX + (5 * this.BlockSize), ((Y-0.5) * this.BlockSize)], [RandomVelocityX, RandomVelocityY], RandomOffset);
                 }
             }
+        }
+
+        let Score = [40, 100, 300, 1200];
+        let Lines = this.CurrentLines - OldLines;
+        for (let Index = 0; Index < Lines; ++Index)
+        {
+            this.CurrentScore += Score[Index];
         }
     }
 
@@ -417,8 +427,8 @@ export class Tetris
         // NOTE: Drawing the current Score.
         Renderer.setScoreText('TopScore', "1000000");
         Renderer.setScoreText('Score', this.CurrentScore);
-        Renderer.setScoreText('Lines', 0);
-        Renderer.setScoreText('Level', 0);
+        Renderer.setScoreText('Lines', this.CurrentLines);
+        Renderer.setScoreText('Level', 1);
     }
 
     KeyHandler(Event)
@@ -460,6 +470,23 @@ export class Tetris
             case "ArrowDown":
             {
                 this.ElapsedTime = this.StepTime + 1;
+            } break;
+            case " ":
+            {
+                while (true)
+                {
+                    let NewPieceLocation = [this.CurrentPieceLocation[0], 1+this.CurrentPieceLocation[1]];;
+
+                    let PieceState = this.CanPlace(this.CurrentPiece, NewPieceLocation[0], NewPieceLocation[1]);
+                    if (PieceState !== TetrisPlaceStates.ALLOWED)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        this.CurrentPieceLocation = NewPieceLocation;
+                    }
+                }
             } break;
         }
     }
