@@ -35,11 +35,31 @@ Template.innerHTML = `
             width: 120px;
             height: 50px;
         }
+
+        #game-over {
+            position: absolute;
+            left: 38%;
+            top: 48%;
+
+            font-family: 'Press Start 2P', cursive;
+            font-weight: 800;
+            font-size: 24px;
+            color: #FFFFFF;
+            border: none;
+            text-decoration: none;
+
+            width: 300px;
+            height: 50px;
+            visibility: hidden;
+        }
     </style>
     
     <div id="arcade-container">
         <div id="menu">
             <a id="start-button" href="#">Start</a>
+        </div>
+        <div>
+            <p id="game-over">Game Over!</p>
         </div>
         <canvas id="arcade"></canvas>
         <div id=arcade-text>
@@ -110,6 +130,11 @@ export class Arcade extends window.HTMLElement
         if (this.Running)
         {
             requestAnimationFrame(this.Update.bind(this));
+        }
+        else
+        {
+            let GameOverText = this.shadowRoot.querySelector("#game-over");
+            GameOverText.style.visibility =  "visible";
         }
     }
 }
